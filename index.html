@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dropdown with Search and Buttons</title>
+	<style>
+		.dropdown-container {
+			position: relative;
+			display: inline-block;
+			width: 200px;
+		}
+		.dropdown-button {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 10px;
+			background-color: #f9f9f9;
+			border: 1px solid #ccc;
+			cursor: pointer;
+		}
+		.dropdown-list {
+			display: none;
+			position: absolute;
+			background-color: #f9f9f9;
+			width: 100%;
+			box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+			z-index: 1;
+		}
+		.dropdown-list input[type="search"] {
+			box-sizing: border-box;
+			width: 100%;
+			padding: 8px;
+			margin: 0;
+			border: none;
+		}
+		.dropdown-list ul {
+			list-style-type: none;
+			padding: 0;
+			margin: 0;
+			max-height: 200px;
+			overflow-y: auto;
+		}
+		.dropdown-list li {
+			padding: 8px;
+			cursor: pointer;
+		}
+		.dropdown-list li:hover {
+			background-color: #ddd;
+		}
+		.dropdown-list button {
+			display: block;
+			width: 100%;
+			padding: 8px;
+			border: none;
+			background-color: #f9f9f9;
+			cursor: pointer;
+		}
+		.dropdown-list button:hover {
+			background-color: #ddd;
+		}
+		.quantity {
+			margin-left: 10px;
+		}
+		.noselect {
+			user-select: none;
+		}
+	</style>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.1/underscore-min.js"></script>
+</head>
+<body>
+	<div class="instructions">(Click to expand and select states to filter)</div>
+	<div class="dropdown-container">
+		<div class="dropdown-button noselect">
+			<div class="dropdown-label">States</div>
+			<div class="dropdown-quantity">(<span class="quantity">Any</span>)</div>
+			<i class="fa fa-filter"></i>
+		</div>
+		<div class="dropdown-list">
+			<input type="search" placeholder="Search states" id="states[]" class="dropdown-search"/>
+			<ul></ul>
+			<button class="ok-button">OK</button>
+			<button class="cancel-button">Cancel</button>
+			<button class="clear-button">Clear Filter</button>
+		</div>
+	</div>
+		<button class="clear-selection-button">Clear Selection</button>
+
+	<script>
+		$(document).ready(function() {
+			var isConfirmed = false;
+
+    // Function to update the quantity count
+			function updateQuantity() {
+				var container = $('.dropdown-container');
+				var numChecked = container.find('[type="checkbox"]:checked').length;
+				container.find('.quantity').text(numChecked || 'Any');
+			}
+
+    // Click handler for the dropdown button
+			$('.dropdown-button').on('click', function() {
+				$(this).siblings('.dropdown-list').toggle();
+        isConfirmed = false; // Reset confirmation when opening dropdown
+      });
+
+    // Input event handler for the search input
+			$('.dropdown-search').on('input', function() {
+				var target = $(this);
+				var dropdownList = target.closest('.dropdown-list');
+				var search = target.val().toLowerCase();
+
+				if (!search) {
+					dropdownList.find('li').show();
+					return false;
+				}
+
+				dropdownList.find('li').each(function() {
+					var text = $(this).text().toLowerCase();
+					var match = text.indexOf(search) > -1;
+					$(this).toggle(match);
+				});
+			});
+
+    // Change event handler for checkboxes
+			$(document).on('change', '[type="checkbox"]', function() {
+				updateQuantity();
+			});
+
+    // Event listener to handle clicks outside of dropdown
+			$(document).on('click', function(event) {
+				var $target = $(event.target);
+				var $dropdownList = $('.dropdown-list');
+				var $container = $('.dropdown-container');
+
+				if (!$target.closest('.dropdown-container').length) {
+					if (!$target.hasClass('clear-selection-button') && !$target.hasClass('ok-button')) {
+						if (!isConfirmed) {
+							$dropdownList.find('[type="checkbox"]').prop('checked', false);
+							updateQuantity();
+						}
+						$dropdownList.hide();
+					}
+				} else {
+					if ($target.hasClass('ok-button')) {
+                isConfirmed = true; // Set confirmation state
+                $dropdownList.hide();
+              }
+            }
+          });
+
+    // Click handler for OK button
+			$('.ok-button').on('click', function() {
+        isConfirmed = true; // Set confirmation state
+        $('.dropdown-list').hide();
+      });
+
+    // Click handler for Cancel button
+			$('.cancel-button').on('click', function() {
+				var dropdownList = $(this).closest('.dropdown-list');
+				dropdownList.hide();
+				dropdownList.find('.dropdown-search').val('');
+				dropdownList.find('li').show();
+        dropdownList.find('[type="checkbox"]').prop('checked', false); // Unselect all checkboxes
+        updateQuantity(); // Update quantity when cancelling
+      });
+
+    // Click handler for Clear Filter button
+			$('.clear-button').on('click', function() {
+				var container = $(this).closest('.dropdown-container');
+				container.find('[type="checkbox"]').prop('checked', false);
+        updateQuantity(); // Update quantity when clearing filter
+      });
+
+    // Click handler for Clear Selection button
+			$('.clear-selection-button').on('click', function() {
+				$('.dropdown-list').find('[type="checkbox"]').prop('checked', false);
+        updateQuantity(); // Update quantity when clearing selection
+      });
+
+			var usStates = [
+				{ name: 'ALABAMA', abbreviation: 'AL' },
+				{ name: 'ALASKA', abbreviation: 'AK' },
+				{ name: 'AMERICAN SAMOA', abbreviation: 'AS' },
+				{ name: 'ARIZONA', abbreviation: 'AZ' },
+				{ name: 'ARKANSAS', abbreviation: 'AR' },
+				{ name: 'CALIFORNIA', abbreviation: 'CA' },
+				{ name: 'COLORADO', abbreviation: 'CO' },
+				{ name: 'CONNECTICUT', abbreviation: 'CT' },
+				{ name: 'DELAWARE', abbreviation: 'DE' },
+				{ name: 'DISTRICT OF COLUMBIA', abbreviation: 'DC' },
+				{ name: 'FEDERATED STATES OF MICRONESIA', abbreviation: 'FM' },
+				{ name: 'FLORIDA', abbreviation: 'FL' },
+				{ name: 'GEORGIA', abbreviation: 'GA' },
+				{ name: 'GUAM', abbreviation: 'GU' },
+				{ name: 'HAWAII', abbreviation: 'HI' },
+				{ name: 'IDAHO', abbreviation: 'ID' },
+				{ name: 'ILLINOIS', abbreviation: 'IL' },
+				{ name: 'INDIANA', abbreviation: 'IN' },
+				{ name: 'IOWA', abbreviation: 'IA' },
+				{ name: 'KANSAS', abbreviation: 'KS' },
+				{ name: 'KENTUCKY', abbreviation: 'KY' },
+				{ name: 'LOUISIANA', abbreviation: 'LA' },
+				{ name: 'MAINE', abbreviation: 'ME' },
+				{ name: 'MARSHALL ISLANDS', abbreviation: 'MH' },
+				{ name: 'MARYLAND', abbreviation: 'MD' },
+				{ name: 'MASSACHUSETTS', abbreviation: 'MA' },
+				{ name: 'MICHIGAN', abbreviation: 'MI' },
+				{ name: 'MINNESOTA', abbreviation: 'MN' },
+				{ name: 'MISSISSIPPI', abbreviation: 'MS' },
+				{ name: 'MISSOURI', abbreviation: 'MO' },
+				{ name: 'MONTANA', abbreviation: 'MT' },
+				{ name: 'NEBRASKA', abbreviation: 'NE' },
+				{ name: 'NEVADA', abbreviation: 'NV' },
+				{ name: 'NEW HAMPSHIRE', abbreviation: 'NH' },
+				{ name: 'NEW JERSEY', abbreviation: 'NJ' },
+				{ name: 'NEW MEXICO', abbreviation: 'NM' },
+				{ name: 'NEW YORK', abbreviation: 'NY' },
+				{ name: 'NORTH CAROLINA', abbreviation: 'NC' },
+				{ name: 'NORTH DAKOTA', abbreviation: 'ND' },
+				{ name: 'NORTHERN MARIANA ISLANDS', abbreviation: 'MP' },
+				{ name: 'OHIO', abbreviation: 'OH' },
+				{ name: 'OKLAHOMA', abbreviation: 'OK' },
+				{ name: 'OREGON', abbreviation: 'OR' },
+				{ name: 'PALAU', abbreviation: 'PW' },
+				{ name: 'PENNSYLVANIA', abbreviation: 'PA' },
+				{ name: 'PUERTO RICO', abbreviation: 'PR' },
+				{ name: 'RHODE ISLAND', abbreviation: 'RI' },
+				{ name: 'SOUTH CAROLINA', abbreviation: 'SC' },
+				{ name: 'SOUTH DAKOTA', abbreviation: 'SD' },
+				{ name: 'TENNESSEE', abbreviation: 'TN' },
+				{ name: 'TEXAS', abbreviation: 'TX' },
+				{ name: 'UTAH', abbreviation: 'UT' },
+				{ name: 'VERMONT', abbreviation: 'VT' },
+				{ name: 'VIRGIN ISLANDS', abbreviation: 'VI' },
+				{ name: 'VIRGINIA', abbreviation: 'VA' },
+				{ name: 'WASHINGTON', abbreviation: 'WA' },
+				{ name: 'WEST VIRGINIA', abbreviation: 'WV' },
+				{ name: 'WISCONSIN', abbreviation: 'WI' },
+				{ name: 'WYOMING', abbreviation: 'WY' }
+				];
+
+			var stateTemplate = _.template(
+				'<li>' +
+				'<input id="<%= abbreviation %>" name="<%= abbreviation %>" type="checkbox">' +
+				'<label for="<%= abbreviation %>"><%= name %></label>' +
+				'</li>'
+				);
+
+			var $dropdownList = $('.dropdown-list ul');
+			usStates.forEach(function(state) {
+				$dropdownList.append(stateTemplate(state));
+			});
+		});
+	</script>
+</body>
+</html>
